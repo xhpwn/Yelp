@@ -5,32 +5,35 @@
 //  Created by Timothy Lee on 4/23/15.
 //  Copyright (c) 2015 Timothy Lee. All rights reserved.
 //
-
 import UIKit
 
-class BusinessesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
+class BusinessesViewController: UIViewController ,UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate{
     
-    var businesses: [Business]!
     
-    var isMoreDataLoading = false
+    
     
     @IBOutlet weak var tableView: UITableView!
-    
+    var businesses: [Business] = []
+    let searchBar = UISearchBar()
     override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        let searchBar = UISearchBar()
+        searchBar.delegate = self
         searchBar.sizeToFit()
         navigationItem.titleView = searchBar
         
-        tableView.delegate = self
+        //searchDisplayController?.displaysSearchBarInNavigationBar = true
+        
+        super.viewDidLoad()
+        tableView.sizeToFit()
+        
         tableView.dataSource = self
-        tableView.rowHeight = UITableViewAutomaticDimension
-        tableView.estimatedRowHeight = 120
+        tableView.delegate = self
+        //tableView.rowHeight = UITableViewAutomaticDimension
+        //  tableView.estimatedRowHeight = 120
+        
         
         Business.searchWithTerm(term: "Thai", completion: { (businesses: [Business]?, error: Error?) -> Void in
             
-            self.businesses = businesses
+            self.businesses = businesses!
             self.tableView.reloadData()
             if let businesses = businesses {
                 for business in businesses {
@@ -39,7 +42,7 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
                 }
             }
             
-            }
+        }
         )
         
         /* Example of Yelp search with more search options specified
@@ -61,45 +64,38 @@ class BusinessesViewController: UIViewController, UITableViewDataSource, UITable
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if businesses != nil {
-            return businesses.count
-        }
-        else {
-            return 0
-        }
+        
+        return businesses.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "BusinessCell", for: indexPath) as! BusinessCell
-        
         cell.business = businesses[indexPath.row]
-        
         return cell
     }
-    
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        let cell = sender as! UITableViewCell
-        if let indexPath = tableView.indexPath(for: cell) {
-            let business = businesses[indexPath.row]
-            let businessDetailViewController = segue.destination as! BusinessDetailViewController
-            businessDetailViewController.business = business
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: false)
-    }
-    
-    func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        if (!isMoreDataLoading) {
-            let scrollViewContentHeight = tableView.contentSize.height
-            let scrollOffsetThreshold = scrollViewContentHeight - tableView.bounds.size.height
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        // When there is no text, filteredData is the same as the original data
+        // When user has entered text into the search box
+        // Use the filter method to iterate over all items in the data array
+        // For each item, return true if the item should be included and false if the
+        // item should NOT be included
+        Business.searchWithTerm(term: searchText, completion: { (businesses: [Business]?, error: Error?) -> Void in
             
-            if(scrollView.contentOffset.y > scrollOffsetThreshold && tableView.isDragging) {
-                isMoreDataLoading = true
+            self.businesses = businesses!
+            self.tableView.reloadData()
+            if let businesses = businesses {
+                for business in businesses {
+                    print(business.name!)
+                    print(business.address!)
+                }
             }
+            
         }
+        )
     }
+    
+    
+    
     /*
     func loadMoreData() {
         
